@@ -1,3 +1,11 @@
+# List all profiles in C:\Users\ and their last used date
+Write-Host "Listing all profiles and their last accessed dates..."
+$allProfileInfo = Get-ChildItem 'C:\Users\' -Directory | Select-Object Name, LastWriteTime
+foreach ($profileInfo in $allProfileInfo) {
+    Write-Host "Profile: $($profileInfo.Name) - Last Used: $($profileInfo.LastWriteTime)"
+}
+Write-Host "------------------------------------------------------------"
+
 # Ask the user for profiles to keep
 $profilesToKeep = @("Default", $env:USERNAME)  # Always keep the "Default" profile and the current user's profile
 do {
@@ -7,11 +15,8 @@ do {
     }
 } while ($profile -ne 'r')
 
-# List all profiles in C:\Users\
-$allProfiles = Get-ChildItem 'C:\Users\' -Directory | Select-Object -ExpandProperty Name
-
 # Identify profiles to delete
-$profilesToDelete = $allProfiles | Where-Object { $profilesToKeep -notcontains $_ }
+$profilesToDelete = $allProfileInfo.Name | Where-Object { $profilesToKeep -notcontains $_ }
 
 # Delete the identified profiles and their registry keys
 foreach ($profile in $profilesToDelete) {
@@ -33,5 +38,13 @@ foreach ($profile in $profilesToDelete) {
     }
 }
 
-# Completion message
+# List the remaining profiles after deletion
+$remainingProfiles = Get-ChildItem 'C:\Users\' -Directory | Select-Object -ExpandProperty Name
 Write-Host "Profiles deletion process is complete."
+Write-Host "Here are the profiles remaining on your C:\ after running this program:"
+foreach ($profile in $remainingProfiles) {
+    Write-Host " - $profile"
+}
+
+# Prompt for exit
+Read-Host -Prompt "Press any key to exit..."
