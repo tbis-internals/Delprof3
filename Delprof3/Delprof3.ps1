@@ -1,10 +1,20 @@
+
 param (
     [switch]$List,
-    [string[]]$Delete
+    [string[]]$Delete,
+    [switch]$Help
 )
 
 $excludedProfiles = @("Default", "Public", $env:USERNAME)
 $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList"
+
+function Show-Help {
+    Write-Host "`nDelprof3 - Outil de gestion des profils utilisateurs"
+    Write-Host "Usage :"
+    Write-Host "  -List                  Liste tous les profils utilisateurs"
+    Write-Host "  -Delete user1,user2    Supprime les profils spécifiés"
+    Write-Host "  -Help                  Affiche cette aide"
+}
 
 function List-Profiles {
     Write-Host "`nProfils utilisateurs trouvés dans C:\Users :"
@@ -47,17 +57,12 @@ function Delete-Profiles {
     }
 }
 
-# Exécution
-if ($List) {
+if ($Help) {
+    Show-Help
+} elseif ($List) {
     List-Profiles
-}
-
-if ($Delete) {
+} elseif ($Delete) {
     Delete-Profiles
-}
-
-if (-not $List -and -not $Delete) {
-    Write-Host "Utilisation :"
-    Write-Host " - Pour lister les profils : .\Delprof3.ps1 -List"
-    Write-Host " - Pour supprimer des profils : .\Delprof3.ps1 -Delete user1,user2"
+} else {
+    Show-Help
 }
