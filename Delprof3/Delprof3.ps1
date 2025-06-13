@@ -9,17 +9,34 @@ $excludedProfiles = @("Default", "Public", $env:USERNAME)
 $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList"
 
 function Show-Help {
-    Write-Host "`nDelprof3 - Outil de gestion des profils utilisateurs"
-    Write-Host "Usage :"
-    Write-Host "  -List                  Liste tous les profils utilisateurs"
-    Write-Host "  -Delete user1,user2    Supprime les profils spécifiés"
-    Write-Host "  -Help                  Affiche cette aide"
+    Write-Host "`nUtilisation :"
+    Write-Host " - Pour lister les profils : .\Delprof3.ps1 -List"
+    Write-Host " - Pour supprimer des profils : .\Delprof3.ps1 -Delete user1,user2"
+    Write-Host " - Pour afficher l'aide : .\Delprof3.ps1 -Help"
 }
 
 function List-Profiles {
     Write-Host "`nProfils utilisateurs trouvés dans C:\Users :"
     Get-ChildItem 'C:\Users\' -Directory | ForEach-Object {
         Write-Host " - $($_.Name) (Dernier accès : $($_.LastWriteTime))"
+    }
+}
+
+function Force-DeleteFolder {
+    param([string]$folderPath)
+
+    if (Test-Path $folderPath) {
+        try {
+            $null = New-Item -ItemType Directory -Path "C:\\Temp\\EmptyFolder" -Force
+            robocopy "C:\\Temp\\EmptyFolder" $folderPath /MIR > $null
+            Remove-Item $folderPath -Force -Recurse -ErrorAction SilentlyContinue
+            Remove-Item "C:\\Temp\\EmptyFolder" -Force -Recurse -ErrorAction SilentlyContinue
+            Write-Host "✅ Dossier supprimé : $folderPath"
+        } catch {
+            Write-Warning "Erreur lors de la suppression du dossier $folderPath : $_"
+        }
+    } else {
+        Write-Warning "Le dossier $folderPath n'existe pas."
     }
 }
 
@@ -31,16 +48,7 @@ function Delete-Profiles {
         }
 
         $profilePath = "C:\Users\$profile"
-        if (Test-Path $profilePath) {
-            try {
-                Remove-Item -Path $profilePath -Recurse -Force -ErrorAction Stop
-                Write-Host "✅ Dossier supprimé : $profilePath"
-            } catch {
-                Write-Warning "Erreur lors de la suppression du dossier $profilePath : $_"
-            }
-        } else {
-            Write-Warning "Le dossier $profilePath n'existe pas."
-        }
+        Force-DeleteFolder -folderPath $profilePath
 
         try {
             $profileList = Get-ChildItem $regPath
@@ -57,6 +65,7 @@ function Delete-Profiles {
     }
 }
 
+# Exécution
 if ($Help) {
     Show-Help
 } elseif ($List) {
